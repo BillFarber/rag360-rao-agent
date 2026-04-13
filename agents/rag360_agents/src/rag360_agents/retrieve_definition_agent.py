@@ -21,10 +21,12 @@ class RetrieveDefinitionAgentConfig(ContextAgentConfig):
     id="retrieve-definition",
     agent_type="context",
     title="Retrieve Definition",
-    description="Retrieves a definition from MarkLogic.",
+    description="Get the RetrieveDefinition from MarkLogic.",
     config_schema=RetrieveDefinitionAgentConfig,
 )
-class RetrieveDefinitionAgent(ContextAgent, Agent[RetrieveDefinitionAgentConfig]):
+class RetrieveDefinitionAgent(
+    ContextAgent, Agent[RetrieveDefinitionAgentConfig]
+):
     async def getRetrieveDefinition(
         self,
         memory: QuestionMemory,
@@ -35,7 +37,7 @@ class RetrieveDefinitionAgent(ContextAgent, Agent[RetrieveDefinitionAgentConfig]
         url = f"{self.config.marklogic_url}/v1/retrieve/definition"
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, params={"query": question})
+                response = await client.get(url)
                 response.raise_for_status()
                 definition_text = response.text
         except httpx.HTTPError as e:
