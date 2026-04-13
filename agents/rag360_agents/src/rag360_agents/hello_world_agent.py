@@ -6,7 +6,6 @@ from nuclia_arag.agent import Agent
 from nuclia_arag.configure import agent
 from nuclia_arag.context.agent import ContextAgent
 from nuclia_arag.context.config import ContextAgentConfig
-from nuclia_arag.definition import FunctionDefinition
 from nuclia_arag.manager import Manager
 from nuclia_arag.memory.memory import QuestionMemory
 from nuclia_arag_models.memory import Chunk, Context
@@ -25,16 +24,6 @@ class HelloWorldAgentConfig(ContextAgentConfig):
     config_schema=HelloWorldAgentConfig,
 )
 class HelloWorldAgent(ContextAgent, Agent[HelloWorldAgentConfig]):
-    # Published functions called by the smart planner must be async,
-    # accept memory and manager, and return a Context object.
-    __published_functions__ = {
-        "greet": FunctionDefinition(
-            name="greet",
-            description="Return a greeting string as context.",
-            parameters={},
-        )
-    }
-
     async def greet(
         self,
         memory: QuestionMemory,

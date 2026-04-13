@@ -14,32 +14,9 @@ rag360-agent:
       required: []
       preprocess: []
       context:
-        - module: smart
-          id: rag360-smart
-          title: RAG360 Agent
-          max_iterations: 3
-          prune_context: false
-          context_validation_model: chatgpt-azure-4o-mini
-          rephrase_model: chatgpt-azure-4o-mini
-          planner_model: chatgpt-azure-5-mini
-          executor_model: chatgpt-azure-5-mini
-          extra_prompt: >-
-            You are an agent that can answer questions about data as well as
-            perform tasks on the data platform system. Anything related doing
-            CRUD on creating projects, datasets or ingestion pipelines should
-            use the tools for them and not search/find data for
-            question/answering.
-          registered_agents:
-            - module: hello-world
-              id: hello-world
-              title: Hello World
-          registered_agents_descriptions:
-            hello-world: >-
-              Returns a simple greeting string. Useful as a minimal example or
-              placeholder context agent.
-          registered_agents_exposed_functions:
-            hello-world:
-              - greet
+        - module: hello-world
+          id: hello-world
+          title: Hello World
       generation:
         - module: passthrough
       postprocess: []
