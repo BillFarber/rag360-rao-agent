@@ -1,0 +1,26 @@
+name: rao-rag360
+
+services:
+  agents:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+      args:
+        ARAG_IMAGE: ghcr.io/nuclia/rao
+      #   ARAG_VERSION: latest
+    # allow breakpoints
+    stdin_open: true
+    tty: true
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DEV=true
+    env_file:
+      - .env.compose
+      - .env.dev
+    restart: unless-stopped
+    volumes:
+      - ./agents/:/app/rag360/agents/
+      - ./agents/config.yaml:/app/rag360/config.yaml

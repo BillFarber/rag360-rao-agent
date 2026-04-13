@@ -1,0 +1,92 @@
+#
+# Available Models:
+# claude-4-opus
+# claude-4-sonnet
+# claude-4-5-sonnet
+# claude-4-5-haiku
+# gcp-claude-3-7-sonnet
+# gcp-claude-4-5-sonnet
+# gcp-claude-4-5-haiku
+# aws-claude-3-7-sonnet
+# aws-claude-4-sonnet
+# aws-claude-4-opus
+# aws-claude-4-1-opus
+# aws-claude-4-5-sonnet
+# aws-claude-4-5-haiku
+# gemini-2.0-flash
+# gemini-2.0-flash-lite
+# gemini-2.5-pro
+# gemini-2.5-flash
+# gemini-2.5-flash-lite
+# gemini-2.5-flash-image
+# gemini-3.1-pro
+# gemini-3-pro-image
+# chatgpt4
+# chatgpt4o
+# chatgpt4o-mini
+# chatgpt-o1
+# chatgpt-o3
+# chatgpt-o3-mini
+# chatgpt-o4-mini
+# chatgpt-4.1
+# chatgpt-5
+# chatgpt-5-mini
+# chatgpt-5-nano
+# chatgpt-5-chat
+# chatgpt-azure-4o
+# chatgpt-azure-4o-mini
+# chatgpt-azure-o1
+# chatgpt-azure-o3-mini
+# chatgpt-azure-o3
+# chatgpt-azure-o4-mini
+# chatgpt-azure-5
+# chatgpt-azure-5-mini
+# chatgpt-azure-5-nano
+# chatgpt-azure-5-chat
+# azure-deepseek-r1
+# azure-gpt-oss-120b
+# 
+
+rag360-agent:
+  title: RAG360 Agent
+  description: RAG360 agent for retrieving data from MarkLogic for RAG use cases.
+  instructions: You are a helpful assistant.
+  drivers: []
+  rules:
+    rules:
+      - prompt: Be polite and concise.
+  workflows:
+    default:
+      name: Default
+      description: Answer questions.
+      preprocess: []
+      context:
+        - module: smart
+          id: rag360-smart
+          title: RAG360 Agent
+          max_iterations: 3
+          prune_context: false
+          context_validation_model: chatgpt-azure-4o-mini
+          rephrase_model: chatgpt-azure-4o-mini
+          planner_model: chatgpt-azure-5-mini
+          executor_model: chatgpt-azure-5-mini
+          extra_prompt: >-
+            You are an agent that can answer questions about data as well as
+            perform tasks on the data platform system. Anything related doing
+            CRUD on creating projects, datasets or ingestion pipelines should
+            use the tools for them and not search/find data for
+            question/answering.
+          registered_agents:
+            - module: hello-world
+              id: hello-world
+              title: Hello World
+          registered_agents_descriptions:
+            hello-world: >-
+              Returns a simple greeting string. Useful as a minimal example or
+              placeholder context agent.
+          registered_agents_exposed_functions:
+            hello-world:
+              - greet
+      generation:
+        - module: passthrough
+      postprocess: []
