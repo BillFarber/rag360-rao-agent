@@ -11,35 +11,36 @@ from nuclia_arag.memory.memory import QuestionMemory
 from nuclia_arag_models.memory import Chunk, Context
 
 
-class HelloWorldAgentConfig(ContextAgentConfig):
-    module: Literal["hello-world"] = "hello-world"
-    greeting: str = "Hello, World!"
+class RetrieveDefinitionAgentConfig(ContextAgentConfig):
+    module: Literal["retrieve-definition"] = "retrieve-definition"
 
 
 @agent(
-    id="hello-world",
+    id="retrieve-definition",
     agent_type="context",
-    title="Hello World",
-    description="A minimal example agent that returns a fixed greeting as context.",
-    config_schema=HelloWorldAgentConfig,
+    title="Retrieve Definition",
+    description="Retrieves a definition from MarkLogic.",
+    config_schema=RetrieveDefinitionAgentConfig,
 )
-class HelloWorldAgent(ContextAgent, Agent[HelloWorldAgentConfig]):
-    async def greet(
+class RetrieveDefinitionAgent(ContextAgent, Agent[RetrieveDefinitionAgentConfig]):
+    async def getRetrieveDefinition(
         self,
         memory: QuestionMemory,
         manager: Manager,
         question: Optional[str] = "",
         question_uuid: Optional[str] = None,
     ) -> Context:
+        # TODO: replace placeholder with actual MarkLogic query
+        definition_text = f"Definition for '{question}': [retrieved from MarkLogic]"
         return Context(
-            agent_id=self.config.id or "hello-world",
+            agent_id=self.config.id or "retrieve-definition",
             original_question_uuid=memory.original_question_uuid,
             actual_question_uuid=question_uuid or uuid4().hex,
             question=question or "",
-            source="hello-world",
-            agent="hello-world",
+            source="retrieve-definition",
+            agent="retrieve-definition",
             title=self.config.title,
-            chunks=[Chunk(chunk_id="greeting", text=self.config.greeting)],
+            chunks=[Chunk(chunk_id="definition", text=definition_text)],
         )
 
     async def _get_question_context(
@@ -52,7 +53,7 @@ class HelloWorldAgent(ContextAgent, Agent[HelloWorldAgentConfig]):
         extra_context: Optional[Dict[str, Any]] = None,
     ) -> list[tuple[str, str]]:
         t0 = time()
-        context = await self.greet(
+        context = await self.getRetrieveDefinition(
             memory=memory,
             manager=manager,
             question=question,
@@ -67,9 +68,9 @@ class HelloWorldAgent(ContextAgent, Agent[HelloWorldAgentConfig]):
         )
         await memory.add_step(
             step_module=self.config.module,
-            step_title=self.step_title("Hello World"),
-            step_agent_path=f"/context/{self.config.id or 'hello-world'}",
-            step_value=self.config.greeting,
+            step_title=self.step_title("Retrieve Definition"),
+            step_agent_path=f"/context/{self.config.id or 'retrieve-definition'}",
+            step_value=question,
             timeit=time() - t0,
             input_nuclia_tokens=0,
             output_nuclia_tokens=0,

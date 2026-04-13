@@ -7,16 +7,17 @@ rag360-agent:
     rules:
       - prompt: Be polite and concise.
   workflows:
-    default:
-      name: Default
-      description: Answer questions.
+    getRetrieveDefinition:
+      name: RetrieveDefinition
+      description: Retrieve a definition from MarkLogic.
       parameters: {}
       required: []
       preprocess: []
       context:
-        - module: hello-world
-          id: hello-world
-          title: Hello World
+        - module: retrieve-definition
+          id: retrieve-definition
+          title: Retrieve Definition
+          prune_context: false
       generation:
         - module: passthrough
       postprocess: []

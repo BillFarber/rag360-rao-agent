@@ -1,3 +1,3 @@
-from rag360_agents.hello_world_agent import HelloWorldAgent
+from rag360_agents.retrieve_definition_agent import RetrieveDefinitionAgent
 
-__all__ = ["HelloWorldAgent"]
+__all__ = ["RetrieveDefinitionAgent"]
