@@ -35,6 +35,8 @@ htmlcov/
 # Secrets / environment
 .env
 .env.*
+!.env.compose
+!.env.dev.example
 
 # Logs
 *.log
