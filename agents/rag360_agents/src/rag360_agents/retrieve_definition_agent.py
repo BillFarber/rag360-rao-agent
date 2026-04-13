@@ -15,6 +15,8 @@ from nuclia_arag_models.memory import Chunk, Context
 class RetrieveDefinitionAgentConfig(ContextAgentConfig):
     module: Literal["retrieve-definition"] = "retrieve-definition"
     marklogic_url: str = "http://localhost:8003"
+    marklogic_username: str = "admin"
+    marklogic_password: str = "admin"
 
 
 @agent(
@@ -35,9 +37,10 @@ class RetrieveDefinitionAgent(
         question_uuid: Optional[str] = None,
     ) -> Context:
         url = f"{self.config.marklogic_url}/v1/retrieve/definition"
+        auth = httpx.DigestAuth(self.config.marklogic_username, self.config.marklogic_password)
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(url)
+                response = await client.get(url, auth=auth)
                 response.raise_for_status()
                 definition_text = response.text
         except httpx.HTTPError as e:
