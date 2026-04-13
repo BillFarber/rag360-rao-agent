@@ -21,6 +21,8 @@ services:
       - .env.compose
       - .env.dev
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./agents/:/app/rag360/agents/
       - ./agents/config.yaml:/app/rag360/config.yaml

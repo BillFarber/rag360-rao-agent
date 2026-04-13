@@ -14,7 +14,7 @@ from nuclia_arag_models.memory import Chunk, Context
 
 class RetrieveDefinitionAgentConfig(ContextAgentConfig):
     module: Literal["retrieve-definition"] = "retrieve-definition"
-    marklogic_url: str = "http://localhost:8003"
+    marklogic_url: str = "http://host.docker.internal:8003"
     marklogic_username: str = "admin"
     marklogic_password: str = "admin"
 
