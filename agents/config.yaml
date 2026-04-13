@@ -1,52 +1,3 @@
-#
-# Available Models:
-# claude-4-opus
-# claude-4-sonnet
-# claude-4-5-sonnet
-# claude-4-5-haiku
-# gcp-claude-3-7-sonnet
-# gcp-claude-4-5-sonnet
-# gcp-claude-4-5-haiku
-# aws-claude-3-7-sonnet
-# aws-claude-4-sonnet
-# aws-claude-4-opus
-# aws-claude-4-1-opus
-# aws-claude-4-5-sonnet
-# aws-claude-4-5-haiku
-# gemini-2.0-flash
-# gemini-2.0-flash-lite
-# gemini-2.5-pro
-# gemini-2.5-flash
-# gemini-2.5-flash-lite
-# gemini-2.5-flash-image
-# gemini-3.1-pro
-# gemini-3-pro-image
-# chatgpt4
-# chatgpt4o
-# chatgpt4o-mini
-# chatgpt-o1
-# chatgpt-o3
-# chatgpt-o3-mini
-# chatgpt-o4-mini
-# chatgpt-4.1
-# chatgpt-5
-# chatgpt-5-mini
-# chatgpt-5-nano
-# chatgpt-5-chat
-# chatgpt-azure-4o
-# chatgpt-azure-4o-mini
-# chatgpt-azure-o1
-# chatgpt-azure-o3-mini
-# chatgpt-azure-o3
-# chatgpt-azure-o4-mini
-# chatgpt-azure-5
-# chatgpt-azure-5-mini
-# chatgpt-azure-5-nano
-# chatgpt-azure-5-chat
-# azure-deepseek-r1
-# azure-gpt-oss-120b
-# 
-
 rag360-agent:
   title: RAG360 Agent
   description: RAG360 agent for retrieving data from MarkLogic for RAG use cases.
@@ -59,6 +10,8 @@ rag360-agent:
     default:
       name: Default
       description: Answer questions.
+      parameters: {}
+      required: []
       preprocess: []
       context:
         - module: smart
