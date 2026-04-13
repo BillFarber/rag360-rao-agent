@@ -2,6 +2,7 @@ from time import time
 from typing import Any, Dict, Literal, Optional
 from uuid import uuid4
 
+import httpx
 from nuclia_arag.agent import Agent
 from nuclia_arag.configure import agent
 from nuclia_arag.context.agent import ContextAgent
@@ -13,6 +14,7 @@ from nuclia_arag_models.memory import Chunk, Context
 
 class RetrieveDefinitionAgentConfig(ContextAgentConfig):
     module: Literal["retrieve-definition"] = "retrieve-definition"
+    marklogic_url: str = "http://localhost:8003"
 
 
 @agent(
@@ -30,8 +32,15 @@ class RetrieveDefinitionAgent(ContextAgent, Agent[RetrieveDefinitionAgentConfig]
         question: Optional[str] = "",
         question_uuid: Optional[str] = None,
     ) -> Context:
-        # TODO: replace placeholder with actual MarkLogic query
-        definition_text = f"Definition for '{question}': [retrieved from MarkLogic]"
+        url = f"{self.config.marklogic_url}/v1/retrieve/definition"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, params={"query": question})
+                response.raise_for_status()
+                definition_text = response.text
+        except httpx.HTTPError as e:
+            definition_text = f"Error retrieving definition: {e}"
+
         return Context(
             agent_id=self.config.id or "retrieve-definition",
             original_question_uuid=memory.original_question_uuid,
