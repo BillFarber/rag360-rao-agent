@@ -1,8 +1,8 @@
+import json
 from time import time
 from typing import Any, Dict, Literal, Optional
 from uuid import uuid4
 
-import httpx
 from nuclia_arag.agent import Agent
 from nuclia_arag.configure import agent
 from nuclia_arag.context.agent import ContextAgent
@@ -11,12 +11,17 @@ from nuclia_arag.manager import Manager
 from nuclia_arag.memory.memory import QuestionMemory
 from nuclia_arag_models.memory import Chunk, Context
 
+from rag360_agents.driver import MarkLogicConnection
+
 
 class RetrieveDefinitionAgentConfig(ContextAgentConfig):
     module: Literal["retrieve-definition"] = "retrieve-definition"
     marklogic_url: str = "http://host.docker.internal:8003"
-    marklogic_username: str = "admin"
-    marklogic_password: str = "admin"
+    marklogic_username: Optional[str] = "admin"
+    marklogic_password: Optional[str] = "admin"
+    auth_url: Optional[str] = (None,)
+    api_key: Optional[str] = (None,)
+    jwt_token: Optional[str] = (None,)
 
 
 @agent(
@@ -36,15 +41,18 @@ class RetrieveDefinitionAgent(
         question: Optional[str] = "",
         question_uuid: Optional[str] = None,
     ) -> Context:
-        url = f"{self.config.marklogic_url}/v1/retrieve/definition"
-        auth = httpx.DigestAuth(self.config.marklogic_username, self.config.marklogic_password)
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, auth=auth)
-                response.raise_for_status()
-                definition_text = response.text
-        except httpx.HTTPError as e:
-            definition_text = f"Error retrieving definition: {e}"
+        # manager.getdriver("marklogic")  # Ensure driver is initialized
+        marklogic_client = MarkLogicConnection(
+            base_url=self.config.marklogic_url,
+            auth_method="digest",
+            # auth_url=driver.config.auth_url,
+            # api_key="asdf",
+            username=self.config.marklogic_username,
+            password=self.config.marklogic_password,
+            # jwt_token=driver.config.jwt_token,
+        )
+        response = await marklogic_client.definition()
+        definition_text = json.dumps(response, indent=2)
 
         return Context(
             agent_id=self.config.id or "retrieve-definition",
