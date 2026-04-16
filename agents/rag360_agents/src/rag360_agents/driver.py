@@ -50,8 +50,9 @@ class MarkLogicConnection:
         username: Optional[str] = None,
         password: Optional[str] = None,
         jwt_token: Optional[str] = None,
+        transport_verify: bool = True,
     ):
-        self._client = AsyncClient()
+        self._client = AsyncClient(verify=transport_verify)
         self._client.base_url = base_url
 
         if auth_method == "digest":
