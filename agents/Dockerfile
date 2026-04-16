@@ -1,5 +1,5 @@
 ARG ARAG_IMAGE=europe-west4-docker.pkg.dev/nuclia-internal/private/arag
-ARG ARAG_VERSION=1.0.2_d3dbb37
+ARG ARAG_VERSION=latest
 FROM ${ARAG_IMAGE}:${ARAG_VERSION}
 
 RUN pip install uv

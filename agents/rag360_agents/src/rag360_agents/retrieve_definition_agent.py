@@ -1,17 +1,20 @@
 import json
+import logging
 from time import time
 from typing import Any, Dict, Literal, Optional
 from uuid import uuid4
 
-from nuclia_arag.agent import Agent
-from nuclia_arag.configure import agent
-from nuclia_arag.context.agent import ContextAgent
-from nuclia_arag.context.config import ContextAgentConfig
-from nuclia_arag.manager import Manager
-from nuclia_arag.memory.memory import QuestionMemory
-from nuclia_arag_models.memory import Chunk, Context
+from rao_agent.agent import Agent
+from rao_agent.configure import agent
+from rao_agent.context.agent import ContextAgent
+from rao_agent.context.config import ContextAgentConfig
+from rao_agent.manager import Manager
+from rao_agent.memory import QuestionMemory
+from rao_agent.memory import Chunk, Context
 
 from rag360_agents.driver import MarkLogicConnection
+
+logger = logging.getLogger(__name__)
 
 
 class RetrieveDefinitionAgentConfig(ContextAgentConfig):
@@ -41,6 +44,10 @@ class RetrieveDefinitionAgent(
         question: Optional[str] = "",
         question_uuid: Optional[str] = None,
     ) -> Context:
+        logger.info(
+            "getRetrieveDefinition called\n\tmarklogic_url=%s",
+            (self.config.marklogic_url if self.config.marklogic_url else None),
+        )
         # manager.getdriver("marklogic")  # Ensure driver is initialized
         marklogic_client = MarkLogicConnection(
             base_url=self.config.marklogic_url,

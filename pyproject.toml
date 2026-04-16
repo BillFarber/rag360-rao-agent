@@ -1,0 +1,15 @@
+# This file is included as a convenince for development and testing.
+# It is not intended to be published as a package.
+# The purpose of this file is to allow for easy installation of the dependencies to make life easy in the IDE.
+
+[project]
+name = "rag360-agents"
+version = "0.0.1"
+description = "RAG360 context agents for MarkLogic data retrieval."
+requires-python = ">=3.12"
+dependencies = [
+    "rao-agent",
+]
+
+[tool.uv]
+package = true

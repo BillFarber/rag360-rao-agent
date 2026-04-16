@@ -1,13 +1,15 @@
 import json
+
 import time
 from typing import Iterable, Optional, TypedDict
 
 from httpx import AsyncClient, BasicAuth, DigestAuth
-from nuclia_arag.driver import Driver
+from rao_agent.driver import Driver
 
 from nuclia_agents.drivers.marklogic.config import MarkLogicDriverConfig
-from nuclia_arag import logger
-from nuclia_arag.http import safe_http_client
+from rao_agent import logger
+
+from rao_agent.utils.http import safe_http_client
 
 
 class LabelDef(TypedDict, total=False):

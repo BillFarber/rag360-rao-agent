@@ -17,6 +17,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DEV=true
+      - LOG_LEVEL=INFO
+      - WATCHFILES_FORCE_POLLING=true
     env_file:
       - .env.compose
       - .env.dev
