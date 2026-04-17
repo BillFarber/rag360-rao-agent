@@ -1,15 +1,31 @@
-# This file is included as a convenince for development and testing.
+# This file is included as a convenience for development and testing.
 # It is not intended to be published as a package.
 # The purpose of this file is to allow for easy installation of the dependencies to make life easy in the IDE.
+#
+# To set up for testing, run:
+#   uv pip install -e "agents/rag360_agents/[dev]"
+# Then run tests with:
+#   .venv/bin/python -m pytest tests/unit/
 
 [project]
-name = "rag360-agents"
+name = "rag360-dev"
 version = "0.0.1"
-description = "RAG360 context agents for MarkLogic data retrieval."
+description = "Dev convenience wrapper — not published."
 requires-python = ">=3.12"
 dependencies = [
     "rao-agent",
 ]
 
 [tool.uv]
-package = true
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: requires running docker compose stack",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:backoff",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:nuclia_models",
+]

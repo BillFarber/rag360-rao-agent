@@ -8,7 +8,12 @@ from typing import Any, Optional
 from httpx import AsyncClient, BasicAuth, DigestAuth
 from rao_agent.driver import Driver
 
-from nuclia_agents.drivers.marklogic.config import MarkLogicDriverConfig
+try:
+    from nuclia_agents.drivers.marklogic.config import MarkLogicDriverConfig
+except ImportError:
+    MarkLogicDriverConfig = None  # type: ignore[assignment,misc]
+from rao_agent import logger
+
 from rao_agent.utils.http import safe_http_client
 
 logger = logging.getLogger(__name__)

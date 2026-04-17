@@ -4,5 +4,19 @@ version = "0.0.1"
 description = "RAG360 context agents for MarkLogic data retrieval."
 requires-python = ">=3.12"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: requires running docker compose stack",
+]
+
 [tool.uv]
 package = true
