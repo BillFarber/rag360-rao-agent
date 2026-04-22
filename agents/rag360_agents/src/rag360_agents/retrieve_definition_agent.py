@@ -7,39 +7,22 @@ from uuid import uuid4
 from rao_agent.agent import Agent
 from rao_agent.configure import agent
 from rao_agent.context.agent import ContextAgent
-from rao_agent.context.config import ContextAgentConfig
 from rao_agent.manager import Manager
 from rao_agent.memory import QuestionMemory
 from rao_agent.memory import Chunk, Context
 
-from rag360_agents.driver import build_marklogic_connection_from_headers
+from rag360_agents.driver import MarkLogicAgentConfig, build_marklogic_connection_from_headers
 
 logger = logging.getLogger(__name__)
 
 LOCAL_MARKLOGIC_BASIC_SSL_URL = "https://host.docker.internal:8004"
 LOCAL_MARKLOGIC_DIGEST_URL = "http://host.docker.internal:8003"
 LOCAL_MARKLOGIC_OAUTH_URL = "http://host.docker.internal:8006"
-MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt"] = "digest"
+MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt"] = "basic"
 
 
-class RetrieveDefinitionAgentConfig(ContextAgentConfig):
+class RetrieveDefinitionAgentConfig(MarkLogicAgentConfig):
     module: Literal["retrieve-definition"] = "retrieve-definition"
-    auth_method: str = MARKLOGIC_AUTH
-    marklogic_url: str = (
-        LOCAL_MARKLOGIC_BASIC_SSL_URL
-        if MARKLOGIC_AUTH == "basic"
-        else (
-            LOCAL_MARKLOGIC_DIGEST_URL
-            if MARKLOGIC_AUTH == "digest"
-            else LOCAL_MARKLOGIC_OAUTH_URL
-        )
-    )
-    marklogic_username: Optional[str] = None
-    marklogic_password: Optional[str] = None
-    auth_url: Optional[str] = None
-    api_key: Optional[str] = None
-    jwt_token: Optional[str] = None
-    transport_verify: bool = MARKLOGIC_AUTH != "basic"
 
 
 @agent(

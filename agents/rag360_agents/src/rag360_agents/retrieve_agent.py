@@ -8,27 +8,16 @@ import httpx
 from rao_agent.agent import Agent
 from rao_agent.configure import agent
 from rao_agent.context.agent import ContextAgent
-from rao_agent.context.config import ContextAgentConfig
 from rao_agent.manager import Manager
 from rao_agent.memory import Chunk, Context, QuestionMemory
 
-from rag360_agents.driver import build_marklogic_connection_from_headers
+from rag360_agents.driver import MarkLogicAgentConfig, build_marklogic_connection_from_headers
 
 logger = logging.getLogger(__name__)
 
-LOCAL_MARKLOGIC_DIGEST_URL = "http://host.docker.internal:8003"
 
-
-class RetrieveAgentConfig(ContextAgentConfig):
+class RetrieveAgentConfig(MarkLogicAgentConfig):
     module: Literal["retrieve"] = "retrieve"
-    auth_method: str = "digest"
-    marklogic_url: str = LOCAL_MARKLOGIC_DIGEST_URL
-    marklogic_username: Optional[str] = None
-    marklogic_password: Optional[str] = None
-    auth_url: Optional[str] = None
-    api_key: Optional[str] = None
-    jwt_token: Optional[str] = None
-    transport_verify: bool = True
 
 
 @agent(

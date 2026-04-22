@@ -3,9 +3,10 @@ import json
 import logging
 
 import time
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from httpx import AsyncClient, BasicAuth, DigestAuth
+from rao_agent.context.config import ContextAgentConfig
 from rao_agent.driver import Driver
 
 try:
@@ -17,6 +18,32 @@ from rao_agent import logger
 from rao_agent.utils.http import safe_http_client
 
 logger = logging.getLogger(__name__)
+
+LOCAL_MARKLOGIC_BASIC_SSL_URL = "https://host.docker.internal:8004"
+LOCAL_MARKLOGIC_DIGEST_URL = "http://host.docker.internal:8003"
+LOCAL_MARKLOGIC_OAUTH_URL = "http://host.docker.internal:8006"
+MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt"] = "jwt"
+
+
+class MarkLogicAgentConfig(ContextAgentConfig):
+    """Shared MarkLogic connection config inherited by all RAG360 context agents."""
+
+    auth_method: str = MARKLOGIC_AUTH
+    marklogic_url: str = (
+        LOCAL_MARKLOGIC_BASIC_SSL_URL
+        if MARKLOGIC_AUTH == "basic"
+        else (
+            LOCAL_MARKLOGIC_DIGEST_URL
+            if MARKLOGIC_AUTH == "digest"
+            else LOCAL_MARKLOGIC_OAUTH_URL
+        )
+    )
+    marklogic_username: Optional[str] = None
+    marklogic_password: Optional[str] = None
+    auth_url: Optional[str] = None
+    api_key: Optional[str] = None
+    jwt_token: Optional[str] = None
+    transport_verify: bool = MARKLOGIC_AUTH != "basic"
 
 
 def build_marklogic_connection_from_headers(
@@ -37,7 +64,9 @@ def build_marklogic_connection_from_headers(
 
     Returns (connection, None) on success or (None, error_message) on failure.
     """
-    auth_header = headers.get("authorization") or headers.get("Authorization", "")
+    auth_header = headers.get("authorization") or headers.get(
+        "Authorization", ""
+    )
     bearer_value = (
         auth_header[7:] if auth_header.lower().startswith("bearer ") else None
     )
