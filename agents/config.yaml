@@ -21,3 +21,27 @@ rag360-agent:
       generation:
         - module: passthrough
       postprocess: []
+    getRetrieve:
+      name: Retrieve
+      description: Retrieve documents from MarkLogic for a given query.
+      parameters:
+        retrieveQuery:
+          type: string
+          description: >
+            JSON string to POST as the body to the MarkLogic /v1/retrieve endpoint.
+            Fields: "text" (string, words are AND-ed by default — use " OR " between
+            terms for OR search), "topk" (integer, max results), "labels" (object,
+            filter by label using {"labelName": {"constraintValue": "MustHave"}} or
+            {"constraintValue": "MustNotHave"}).
+            Example: {"text": "diabetes OR insulin", "topk": 10, "labels": {"pubmed": {"constraintValue": "MustHave"}}}
+      required:
+        - retrieveQuery
+      preprocess: []
+      context:
+        - module: retrieve
+          id: retrieve
+          title: Retrieve
+          prune_context: false
+      generation:
+        - module: passthrough
+      postprocess: []

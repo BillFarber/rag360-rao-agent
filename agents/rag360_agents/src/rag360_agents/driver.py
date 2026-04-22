@@ -1,43 +1,102 @@
+import base64
 import json
+import logging
 
 import time
-from typing import Iterable, Optional, TypedDict
+from typing import Any, Optional
 
 from httpx import AsyncClient, BasicAuth, DigestAuth
 from rao_agent.driver import Driver
 
 from nuclia_agents.drivers.marklogic.config import MarkLogicDriverConfig
-from rao_agent import logger
-
 from rao_agent.utils.http import safe_http_client
 
-
-class LabelDef(TypedDict, total=False):
-    label: str
-    description: str
-    requireWhen: list[str]
-    avoidWhen: list[str]
+logger = logging.getLogger(__name__)
 
 
-class FilterDef(TypedDict, total=False):
-    filterType: str
-    dataType: str
-    description: str
-    operators: list[str]
-    exampleValues: list[str]
+def build_marklogic_connection_from_headers(
+    headers: dict,
+    auth_method: str,
+    marklogic_url: str,
+    marklogic_username: Optional[str] = None,
+    marklogic_password: Optional[str] = None,
+    auth_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    jwt_token: Optional[str] = None,
+    transport_verify: bool = True,
+) -> tuple["MarkLogicConnection | None", "str | None"]:
+    """Parse the incoming Authorization header and build a MarkLogicConnection.
 
+    For digest/basic auth: expects `Authorization: Bearer <base64(user:pass)>`.
+    For jwt auth: expects `Authorization: Bearer <token>`.
 
-class DefinitionResponse(TypedDict, total=False):
-    labels: list[LabelDef]
-    filters: dict[str, FilterDef]
+    Returns (connection, None) on success or (None, error_message) on failure.
+    """
+    auth_header = headers.get("authorization") or headers.get("Authorization", "")
+    bearer_value = (
+        auth_header[7:] if auth_header.lower().startswith("bearer ") else None
+    )
 
+    username: Optional[str] = marklogic_username
+    password: Optional[str] = marklogic_password
+    resolved_jwt: Optional[str] = jwt_token
 
-class RetrieveFilter(TypedDict):
-    """A single filter constraint for the retrieve API."""
+    if auth_method == "jwt":
+        if bearer_value:
+            resolved_jwt = bearer_value
+            logger.info("jwt_token source=request Authorization Bearer header")
+        else:
+            logger.error(
+                "MARKLOGIC_AUTH is 'jwt' but no Authorization Bearer header was provided"
+            )
+            return (
+                None,
+                "Error: Authorization Bearer token is required but was not provided.",
+            )
 
-    constraintType: str
-    constraintOperator: str
-    constraintValue: str
+    elif auth_method in ("basic", "digest"):
+        if bearer_value:
+            try:
+                decoded = base64.b64decode(bearer_value).decode()
+                username, password = decoded.split(":", 1)
+                logger.info(
+                    "%s auth credentials source=request Authorization Bearer header",
+                    auth_method,
+                )
+            except Exception:
+                logger.error(
+                    "MARKLOGIC_AUTH is '%s' but Authorization Bearer value could not be "
+                    "base64-decoded as username:password",
+                    auth_method,
+                )
+                return (
+                    None,
+                    "Error: Authorization Bearer value could not be decoded as base64 username:password.",
+                )
+        else:
+            logger.error(
+                "MARKLOGIC_AUTH is '%s' but no Authorization Bearer header was provided",
+                auth_method,
+            )
+            return (
+                None,
+                f"Error: Authorization Bearer header with base64 credentials is required for "
+                f"{auth_method} auth but was not provided.",
+            )
+
+    return (
+        MarkLogicConnection(
+            base_url=marklogic_url,
+            auth_method=auth_method,
+            auth_url=auth_url,
+            api_key=api_key,
+            username=username,
+            password=password,
+            jwt_token=resolved_jwt,
+            transport_verify=transport_verify,
+        ),
+        None,
+    )
 
 
 class MarkLogicConnection:
@@ -78,89 +137,18 @@ class MarkLogicConnection:
             self._auth_url = auth_url
             self._api_key = api_key
 
-    def _build_retrieve_params(
-        self,
-        query: str,
-        top_k: int,
-        must_not_have_labels: Optional[Iterable[str]] = None,
-        must_have_labels: Optional[Iterable[str]] = None,
-        filters: Optional[dict[str, "RetrieveFilter"]] = None,
-    ) -> dict:
-        """Build parameters for the MarkLogic retrieve API call.
-
-        Args:
-            query: Search query text
-            top_k: Maximum number of results to return
-            must_not_have_labels: Labels that documents must NOT have
-            must_have_labels: Labels that documents must have
-            filters: Field-value filters (e.g. document_topic constraint)
-
-        Returns:
-            Dictionary of parameters for the retrieve API call
-        """
-        must_not = set(must_not_have_labels or [])
-        must_have = set(must_have_labels or [])
-
-        # Conflict resolution: exclude wins
-        conflicts = must_not & must_have
-        if conflicts:
-            must_have -= conflicts
-            logger.warning(
-                "Labels present in both must-have and must-not-have: %s",
-                sorted(conflicts),
-            )
-
-        params: dict = {"text": query, "topk": top_k}
-
-        if must_not or must_have:
-            labels: dict[str, dict[str, str]] = {}
-            for l in sorted(must_have):
-                labels[l] = {"constraintValue": "MustHave"}
-            for l in sorted(must_not):
-                # MustNotHave wins if same label appears in both (because we apply it last)
-                labels[l] = {"constraintValue": "MustNotHave"}
-            params["labels"] = labels
-
-        if filters:
-            params["filters"] = filters
-
-        return params
-
-    async def retrieve(
-        self,
-        query: str,
-        *,
-        must_not_have_labels: Optional[Iterable[str]] = None,
-        must_have_labels: Optional[Iterable[str]] = None,
-        filters: Optional[dict[str, "RetrieveFilter"]] = None,
-        top_k: int = 20,
-    ) -> list[str]:
+    async def retrieve_raw(self, body: dict) -> Any:
+        """POST body directly to /v1/retrieve and return the full JSON response."""
         await self._ensure_auth()
-
-        params = self._build_retrieve_params(
-            query=query,
-            top_k=top_k,
-            must_not_have_labels=must_not_have_labels,
-            must_have_labels=must_have_labels,
-            filters=filters,
-        )
-
-        logger.debug("Querying MarkLogic with params: %s", params)
-        response = await self._client.post("/v1/retrieve", json=params)
+        response = await self._client.post("/v1/retrieve", json=body)
         response.raise_for_status()
-        return [
-            m["id"] for m in response.json().get("matches", []) if "id" in m
-        ]
+        return response.json()
 
-    async def definition(self) -> DefinitionResponse:
+    async def definition(self) -> dict:
         await self._ensure_auth()
         response = await self._client.get("/v1/retrieve/definition")
         response.raise_for_status()
-        data = response.json()
-        return DefinitionResponse(
-            labels=data.get("labels", []),
-            filters=data.get("filters", {}),
-        )
+        return response.json()
 
     async def augment(self, ids: list[str]) -> list[str]:
         await self._ensure_auth()
