@@ -2,9 +2,10 @@
 
 import base64
 
-import pytest
-
-from rag360_agents.driver import MarkLogicConnection, build_marklogic_connection_from_headers
+from rag360_agents.driver import (
+    MarkLogicConnection,
+    build_marklogic_connection_from_headers,
+)
 
 DUMMY_URL = "http://localhost:8003"
 
@@ -48,7 +49,9 @@ def test_digest_with_valid_base64_bearer():
 
 
 def test_digest_with_invalid_base64_bearer():
-    conn, err = _call({"Authorization": "Bearer !!not-valid-base64!!"}, "digest")
+    conn, err = _call(
+        {"Authorization": "Bearer !!not-valid-base64!!"}, "digest"
+    )
     assert conn is None
     assert err is not None
     assert "could not be decoded" in err

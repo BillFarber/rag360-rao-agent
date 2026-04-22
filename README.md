@@ -21,21 +21,17 @@ The agent acts as a thin adapter: it translates incoming requests into MarkLogic
 │  │                                                  │   │
 │  │  config.yaml ──► workflows:                      │   │
 │  │                                                  │   │
-│  │   getRetrieveDefinition      getRetrieve         │   │
-│  │          │                        │              │   │
-│  │          ▼                        ▼              │   │
-│  │  ┌───────────────┐   ┌─────────────────────┐    │   │
-│  │  │RetrieveDefini-│   │   RetrieveAgent     │    │   │
-│  │  │tionAgent      │   │  (module: retrieve) │    │   │
-│  │  │               │   │                     │    │   │
-│  │  │GET /v1/       │   │POST /v1/retrieve    │    │   │
-│  │  │  retrieve/    │   │  (retrieveQuery     │    │   │
-│  │  │  definition   │   │   passed as body)   │    │   │
-│  │  └───────┬───────┘   └──────────┬──────────┘    │   │
-│  │          │                      │               │   │
-│  │          └──────────┬───────────┘               │   │
-│  │                     ▼                           │   │
-│  │          generation: passthrough                │   │
+│  │  getRetrieveDefinition  getRetrieve  getAugment  │   │
+│  │          │                  │            │       │   │
+│  │          ▼                  ▼            ▼       │   │
+│  │  RetrieveDefinition   Retrieve       Augment     │   │
+│  │  Agent                Agent          Agent       │   │
+│  │  GET /v1/retrieve/    POST /v1/      POST /v1/   │   │
+│  │    definition         retrieve       augment     │   │
+│  │          │                  │            │       │   │
+│  │          └──────────┬───────┘────────────┘       │   │
+│  │                     ▼                            │   │
+│  │          generation: passthrough                 │   │
 │  └──────────────────────────────────────────────────┘   │
 │                                                         │
 │  Base image: ghcr.io/nuclia/rao                         │
@@ -47,9 +43,6 @@ The agent acts as a thin adapter: it translates incoming requests into MarkLogic
 │      MarkLogic       │
 │  host.docker.        │
 │  internal:8003       │
-│                      │
-│  GET  /v1/retrieve/definition  │
-│  POST /v1/retrieve             │
 └──────────────────────┘
 ```
 
@@ -82,10 +75,11 @@ rag360-rao-agent/
 │           ├── __init__.py
 │           ├── driver.py                       # MarkLogicConnection + shared auth helper
 │           ├── retrieve_definition_agent.py    # RetrieveDefinitionAgent (GET /v1/retrieve/definition)
-│           └── retrieve_agent.py               # RetrieveAgent (POST /v1/retrieve passthrough)
+│           ├── retrieve_agent.py               # RetrieveAgent (POST /v1/retrieve passthrough)
+│           └── augment_agent.py                # AugmentAgent (POST /v1/augment passthrough)
 ├── docker-compose.yaml
 ├── pyproject.toml
-└── .env.dev.example                  # Required env var names
+└── .env.compose.example              # Required env var names
 ```
 
 ## Getting Started
@@ -98,13 +92,12 @@ rag360-rao-agent/
 
 ### 1. Configure environment files
 
-Copy `.env.dev.example` and populate the required values:
+Copy `.env.compose.example` and populate the required values:
 
 ```bash
-# .env.compose — required
+# .env.compose — required (untracked; copy from .env.compose.example)
 nua_api_key=<your-nua-api-key>
 nua_api_uri=https://aws-us-east-2-1.rag.progress.cloud
-# MarkLogic credentials are passed per-request via Authorization header (see below)
 
 # .env.dev — optional overrides (can be empty)
 ```
@@ -145,7 +138,7 @@ The agent supports three `auth_method` modes (configured in each agent's `*Confi
 
 ## API Usage
 
-The agent exposes two Nuclia RAO workflow endpoints:
+The agent exposes three Nuclia RAO workflow endpoints:
 
 **Retrieve Definition** — fetch available labels and filters schema:
 ```
@@ -168,9 +161,23 @@ Content-Type: application/json
 }
 ```
 
-The `retrieveQuery` string is parsed as JSON and posted as-is as the body to `/v1/retrieve`. The raw MarkLogic response is returned as a single context chunk.
+The `retrieveQuery` string is parsed as JSON and posted as-is as the body to `/v1/retrieve`.
 
-Both workflows use the `passthrough` generation step — no additional LLM call is made; retrieved context is returned directly to the caller.
+**Augment** — fetch full document content from MarkLogic by URI:
+```
+POST /api/v1/agent/rag360-agent/workflow/getAugment/session/{session_id}
+Authorization: Bearer <base64(marklogic-user:marklogic-password)>
+Content-Type: application/json
+
+{
+  "question": "",
+  "augmentRequest": "{\"URIs\": [\"/medical/doc001.json\"]}"
+}
+```
+
+The `augmentRequest` string is parsed as JSON and posted as-is as the body to `/v1/augment`.
+
+All workflows use the `passthrough` generation step — no additional LLM call is made; retrieved context is returned directly to the caller.
 
 ## Adding a New Context Agent
 
@@ -178,8 +185,8 @@ Both workflows use the `passthrough` generation step — no additional LLM call 
 2. Decorate it with `@agent(id=..., agent_type="context", ...)`. The `id` must match the `module` literal in the paired `*Config` class.
 3. Use `build_marklogic_connection_from_headers` from `driver.py` for MarkLogic auth — do not copy the auth logic.
 4. Access workflow call arguments via `memory.arguments` (a dict), not `extra_context`.
-4. Export it from `__init__.py`.
-5. Add a new workflow entry in `agents/config.yaml` referencing the module id. Set `prune_context: false` to avoid silent context discard.
+5. Export it from `__init__.py`.
+6. Add a new workflow entry in `agents/config.yaml` referencing the module id. Set `prune_context: false` to avoid silent context discard.
 
 ## Key Constraints
 

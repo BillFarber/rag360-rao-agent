@@ -6,7 +6,6 @@ RUN pip install uv
 
 ENV VIRTUAL_ENV=/app
 
-# Copy the full data-platform workspace
 COPY agents/ /app/rag360/agents/
 
 # Install rag360 workspace packages into the existing RAO venv additively.

@@ -9,31 +9,10 @@ Run with:
     pytest tests/integration/ -m integration
 """
 
-import json
-
 import httpx
 import pytest
 
-
-def _extract_answer(body: str) -> str:
-    """Extract the final answer from an NDJSON streaming response."""
-    for line in body.splitlines():
-        if not line.strip():
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        answer = obj.get("answer")
-        if answer is not None:
-            return str(answer)
-    return ""
-
-
-@pytest.fixture
-def session_id() -> str:
-    from uuid import uuid4
-    return uuid4().hex
+from .helpers import extract_answer
 
 
 @pytest.fixture
@@ -43,9 +22,6 @@ def workflow_url(rao_base_url) -> str:
 
 @pytest.mark.integration
 async def test_retrieve_definition_no_credentials(workflow_url, session_id):
-    """When agent config has no credentials, an error is returned (not a 500)."""
-    # This test validates graceful error handling; it will pass regardless of
-    # whether credentials are configured — it just checks for a non-500 response.
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
             f"{workflow_url}/{session_id}",
@@ -53,6 +29,7 @@ async def test_retrieve_definition_no_credentials(workflow_url, session_id):
         )
 
     assert response.status_code == 200
-    answer = _extract_answer(response.text)
-    assert answer is not None  # some answer (error or definition) is always returned
-
+    answer = extract_answer(response.text)
+    assert (
+        answer is not None
+    )  # some answer (error or definition) is always returned

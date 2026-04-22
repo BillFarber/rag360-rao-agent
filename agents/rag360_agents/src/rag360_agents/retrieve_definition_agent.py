@@ -1,7 +1,7 @@
 import json
 import logging
 from time import time
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import uuid4
 
 from rao_agent.agent import Agent
@@ -14,11 +14,6 @@ from rao_agent.memory import Chunk, Context
 from rag360_agents.driver import MarkLogicAgentConfig, build_marklogic_connection_from_headers
 
 logger = logging.getLogger(__name__)
-
-LOCAL_MARKLOGIC_BASIC_SSL_URL = "https://host.docker.internal:8004"
-LOCAL_MARKLOGIC_DIGEST_URL = "http://host.docker.internal:8003"
-LOCAL_MARKLOGIC_OAUTH_URL = "http://host.docker.internal:8006"
-MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt"] = "basic"
 
 
 class RetrieveDefinitionAgentConfig(MarkLogicAgentConfig):
@@ -46,7 +41,6 @@ class RetrieveDefinitionAgent(
             "getRetrieveDefinition called\n\tmarklogic_url=%s",
             (self.config.marklogic_url if self.config.marklogic_url else None),
         )
-        logger.info("incoming headers: %s", memory.headers)
 
         def _error_context(text: str) -> Context:
             return Context(
@@ -95,7 +89,7 @@ class RetrieveDefinitionAgent(
         question_uuid: str,
         question: str,
         flow_id: str,
-        extra_context: Optional[Dict[str, Any]] = None,
+        extra_context: Optional[dict[str, Any]] = None,
     ) -> list[tuple[str, str]]:
         t0 = time()
         context = await self.getRetrieveDefinition(

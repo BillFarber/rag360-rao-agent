@@ -7,13 +7,6 @@ from typing import Any, Literal, Optional
 
 from httpx import AsyncClient, BasicAuth, DigestAuth
 from rao_agent.context.config import ContextAgentConfig
-from rao_agent.driver import Driver
-
-try:
-    from nuclia_agents.drivers.marklogic.config import MarkLogicDriverConfig
-except ImportError:
-    MarkLogicDriverConfig = None  # type: ignore[assignment,misc]
-from rao_agent import logger
 
 from rao_agent.utils.http import safe_http_client
 
@@ -221,31 +214,3 @@ class MarkLogicConnection:
             expiry_minutes = doc["expires_in"]
             self._client.headers = {"Authorization": f"Bearer {token}"}
             self._auth_expires = time.monotonic() + (60 * expiry_minutes * 0.9)
-
-
-# @driver(
-#     id="marklogic",
-#     title="MarkLogic Driver",
-#     description="Driver for interacting with the MarkLogic  API.",
-#     config_schema=MarkLogicDriverConfig,
-# )
-class MarkLogicDriver(Driver):
-    client: MarkLogicConnection
-
-    @classmethod
-    async def init(cls, driver: MarkLogicDriverConfig):
-        client = MarkLogicConnection(
-            base_url=driver.config.base_url,
-            auth_method=driver.config.auth_method,
-            auth_url=driver.config.auth_url,
-            api_key=driver.config.api_key,
-            username=driver.config.username,
-            password=driver.config.password,
-            jwt_token=driver.config.jwt_token,
-            transport_verify=driver.config.transport_verify,
-        )
-        return cls(
-            client=client,
-            name=driver.name,
-            provider=driver.provider,
-        )

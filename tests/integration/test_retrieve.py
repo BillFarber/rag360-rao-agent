@@ -9,41 +9,21 @@ Run with:
     pytest tests/integration/ -m integration
 """
 
-import json
-
 import httpx
 import pytest
 
-
-def _extract_answer(body: str) -> str:
-    """Extract the final answer from an NDJSON streaming response."""
-    for line in body.splitlines():
-        if not line.strip():
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        answer = obj.get("answer")
-        if answer is not None:
-            return str(answer)
-    return ""
-
-
-@pytest.fixture
-def session_id() -> str:
-    from uuid import uuid4
-    return uuid4().hex
+from .helpers import extract_answer
 
 
 @pytest.fixture
 def workflow_url(rao_base_url) -> str:
-    return f"{rao_base_url}/api/v1/agent/rag360-agent/workflow/getRetrieve/session"
+    return (
+        f"{rao_base_url}/api/v1/agent/rag360-agent/workflow/getRetrieve/session"
+    )
 
 
 @pytest.mark.integration
 async def test_retrieve_missing_query_returns_error(workflow_url, session_id):
-    """Omitting retrieveQuery returns a graceful error (not a 500)."""
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
             f"{workflow_url}/{session_id}",
@@ -51,13 +31,14 @@ async def test_retrieve_missing_query_returns_error(workflow_url, session_id):
         )
 
     assert response.status_code == 200
-    answer = _extract_answer(response.text)
+    answer = extract_answer(response.text)
     assert answer is not None
 
 
 @pytest.mark.integration
-async def test_retrieve_invalid_json_query_returns_error(workflow_url, session_id):
-    """Passing a non-JSON string as retrieveQuery returns a graceful error (not a 500)."""
+async def test_retrieve_invalid_json_query_returns_error(
+    workflow_url, session_id
+):
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
             f"{workflow_url}/{session_id}",
@@ -65,5 +46,5 @@ async def test_retrieve_invalid_json_query_returns_error(workflow_url, session_i
         )
 
     assert response.status_code == 200
-    answer = _extract_answer(response.text)
+    answer = extract_answer(response.text)
     assert answer is not None

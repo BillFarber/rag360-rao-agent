@@ -80,7 +80,6 @@ async def test_non_object_json_is_accepted():
 async def test_missing_auth_header_returns_error():
     agent = _make_agent("digest")
     memory = _make_memory(retrieve_query='{"text": "diabetes"}')
-    # no Authorization header → build_marklogic_connection_from_headers returns error
     ctx = await agent.getRetrieve(memory=memory, manager=Mock())
     assert "Error:" in _chunk_text(ctx)
     assert ctx.chunks[0].chunk_id == "retrieve-error"

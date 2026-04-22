@@ -8,8 +8,6 @@ services:
       dockerfile: agents/Dockerfile
       args:
         ARAG_IMAGE: ghcr.io/nuclia/rao
-      #   ARAG_VERSION: latest
-    # allow breakpoints
     stdin_open: true
     tty: true
     ports:

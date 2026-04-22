@@ -1,7 +1,7 @@
 import json
 import logging
 from time import time
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import uuid4
 
 import httpx
@@ -102,7 +102,7 @@ class RetrieveAgent(ContextAgent, Agent[RetrieveAgentConfig]):
         question_uuid: str,
         question: str,
         flow_id: str,
-        extra_context: Optional[Dict[str, Any]] = None,
+        extra_context: Optional[dict[str, Any]] = None,
     ) -> list[tuple[str, str]]:
         t0 = time()
         context = await self.getRetrieve(
