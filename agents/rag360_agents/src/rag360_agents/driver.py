@@ -149,6 +149,13 @@ class MarkLogicConnection:
         response.raise_for_status()
         return response.json()
 
+    async def augment_raw(self, body: dict) -> Any:
+        """POST body directly to /v1/augment and return the full JSON response."""
+        await self._ensure_auth()
+        response = await self._client.post("/v1/augment", json=body)
+        response.raise_for_status()
+        return response.json()
+
     async def definition(self) -> dict:
         await self._ensure_auth()
         response = await self._client.get("/v1/retrieve/definition")

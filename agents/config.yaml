@@ -45,3 +45,24 @@ rag360-agent:
       generation:
         - module: passthrough
       postprocess: []
+    getAugment:
+      name: Augment
+      description: Augment (fetch full document content) from MarkLogic by document URIs.
+      parameters:
+        augmentRequest:
+          type: string
+          description: >
+            JSON string specifying the documents to fetch from the MarkLogic /v1/augment endpoint.
+            Fields: "URIs" (array of strings, document URIs to fetch — note uppercase URIs).
+            Example: {"URIs": ["/medical/doc002.json", "/medical/doc039.json"]}
+      required:
+        - augmentRequest
+      preprocess: []
+      context:
+        - module: augment
+          id: augment
+          title: Augment
+          prune_context: false
+      generation:
+        - module: passthrough
+      postprocess: []
