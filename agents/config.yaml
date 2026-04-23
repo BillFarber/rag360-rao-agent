@@ -29,11 +29,26 @@ rag360-agent:
           type: string
           description: >
             JSON string to POST as the body to the MarkLogic /v1/retrieve endpoint.
-            Fields: "text" (string, words are AND-ed by default — use " OR " between
-            terms for OR search), "topk" (integer, max results), "labels" (object,
-            filter by label using {"labelName": {"constraintValue": "MustHave"}} or
-            {"constraintValue": "MustNotHave"}).
-            Example: {"text": "diabetes OR insulin", "topk": 10, "labels": {"pubmed": {"constraintValue": "MustHave"}}}
+            Fields:
+              - "text" (string): The search query. IMPORTANT SEARCH BEHAVIOR:
+                - Words are AND-ed by default. A query like "GLP-1 glucose mice" requires
+                  ALL three words to appear — this is overly restrictive and will miss
+                  most relevant documents.
+                - Use " OR " between terms to broaden retrieval across synonyms and
+                  concept variants. This is almost always what you want.
+                - Best practice: build one OR-chain per concept (drug names, outcomes,
+                  species, etc.) and call Retrieve multiple times — once per concept
+                  group — then deduplicate URIs before calling Augment. 
+                - "topk" (integer): Maximum number of results to return.
+              - "labels" (object): Filter by corpus label using
+                {"labelName": {"constraintValue": "MustHave"}} or "MustNotHave".
+            CORRECT example (broad, OR-based):
+              {"text": "GLP-1 OR liraglutide OR semaglutide OR glucagon-like peptide",
+              "topk": 10, "labels": {"pubmed": {"constraintValue": "MustHave"}}}
+            INCORRECT example (AND — too restrictive):
+              {"text": "GLP-1 glucagon-like peptide glucose mice", "topk": 10, ...}
+              ← This requires every word to appear; returns far fewer results.
+
       required:
         - retrieveQuery
       preprocess: []
