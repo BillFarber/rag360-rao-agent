@@ -5,8 +5,8 @@ if [ "${DEV:-false}" = "true" ]; then
 	exec /app/bin/watchfiles \
 		--filter all \
 		--target-type command \
-		'/app/bin/arag-standalone' \
+		'/app/bin/python3 -m rag360_agents.standalone_entrypoint' \
 		/app/rag360
 fi
 
-exec /app/bin/arag-standalone
+exec /app/bin/python3 -m rag360_agents.standalone_entrypoint
