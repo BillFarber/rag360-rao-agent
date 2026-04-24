@@ -26,3 +26,8 @@ services:
     volumes:
       - ./agents/:/app/rag360/agents/
       - ./agents/config.yaml:/app/rag360/config.yaml
+
+networks:
+  default:
+    name: rag360-net
+    external: true

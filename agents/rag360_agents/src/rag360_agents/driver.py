@@ -15,7 +15,10 @@ logger = logging.getLogger(__name__)
 LOCAL_MARKLOGIC_BASIC_SSL_URL = "https://host.docker.internal:8004"
 LOCAL_MARKLOGIC_DIGEST_URL = "http://host.docker.internal:8003"
 LOCAL_MARKLOGIC_OAUTH_URL = "http://host.docker.internal:8006"
-MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt"] = "jwt"
+LOCAL_MARKLOGIC_KEYCLOAK_URL = "http://host.docker.internal:8007"
+MARKLOGIC_AUTH: Literal["api_key", "basic", "digest", "jwt", "keycloak"] = (
+    "keycloak"
+)
 
 
 class MarkLogicAgentConfig(ContextAgentConfig):
@@ -28,7 +31,11 @@ class MarkLogicAgentConfig(ContextAgentConfig):
         else (
             LOCAL_MARKLOGIC_DIGEST_URL
             if MARKLOGIC_AUTH == "digest"
-            else LOCAL_MARKLOGIC_OAUTH_URL
+            else (
+                LOCAL_MARKLOGIC_KEYCLOAK_URL
+                if MARKLOGIC_AUTH == "keycloak"
+                else LOCAL_MARKLOGIC_OAUTH_URL
+            )
         )
     )
     marklogic_username: Optional[str] = None
@@ -53,7 +60,7 @@ def build_marklogic_connection_from_headers(
     """Parse the incoming Authorization header and build a MarkLogicConnection.
 
     For digest/basic auth: expects `Authorization: Bearer <base64(user:pass)>`.
-    For jwt auth: expects `Authorization: Bearer <token>`.
+    For jwt/keycloak auth: expects `Authorization: Bearer <token>`.
 
     Returns (connection, None) on success or (None, error_message) on failure.
     """
@@ -68,13 +75,17 @@ def build_marklogic_connection_from_headers(
     password: Optional[str] = marklogic_password
     resolved_jwt: Optional[str] = jwt_token
 
-    if auth_method == "jwt":
+    if auth_method in ("jwt", "keycloak"):
         if bearer_value:
             resolved_jwt = bearer_value
-            logger.info("jwt_token source=request Authorization Bearer header")
+            logger.info(
+                "jwt_token source=request Authorization Bearer header auth_method=%s",
+                auth_method,
+            )
         else:
             logger.error(
-                "MARKLOGIC_AUTH is 'jwt' but no Authorization Bearer header was provided"
+                "MARKLOGIC_AUTH is '%s' but no Authorization Bearer header was provided",
+                auth_method,
             )
             return (
                 None,
@@ -153,7 +164,7 @@ class MarkLogicConnection:
             self._auth_expires = float("inf")
             self._auth_url = None
             self._api_key = None
-        elif auth_method == "jwt":
+        elif auth_method in ("jwt", "keycloak"):
             assert jwt_token is not None
             self._client.headers = {"Authorization": f"Bearer {jwt_token}"}
             self._auth_expires = float("inf")
